@@ -1,65 +1,103 @@
-import Image from "next/image";
+// ==========================================
+// FILE: src/app/page.tsx
+// PURPOSE: THE LOBBY (Create or Join Room)
+// ==========================================
 
-export default function Home() {
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { socket } from '@/lib/socket';
+import { Gamepad2, Users } from 'lucide-react';
+
+export default function LobbyScreen() {
+  const [name, setName] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const router = useRouter();
+
+  // Clean state on load
+  useEffect(() => {
+    socket.disconnect();
+  }, []);
+
+ const handleCreateRoom = () => {
+    if (!name.trim()) return alert('Bhai, apna naam toh daal do!');
+    
+    socket.connect();
+    socket.emit('create_room', { hostName: name, settings: { drawTime: 80 } }, (response: any) => {
+      if (response.success) {
+        // 🔥 FIX: Removed &host=true. Sab ek hi tarah se join karenge!
+        router.push(`/room/${response.roomId}?name=${encodeURIComponent(name)}`);
+      } else {
+        alert(response.message);
+      }
+    });
+  };
+
+  const handleJoinRoom = () => {
+    if (!name.trim()) return alert('Bhai, apna naam toh daal do!');
+    if (!roomId.trim()) return alert('Room ID required!');
+
+    // Direct to Game Room (Logic is handled there)
+    router.push(`/room/${roomId}?name=${encodeURIComponent(name)}`);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-[#0B0F19] text-white flex items-center justify-center p-4 font-sans">
+      <div className="bg-[#1A2235] p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-800">
+        
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-tight flex justify-center items-center gap-3">
+            <Gamepad2 size={40} className="text-blue-400" />
+            Skribbl Clone
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="text-gray-400 mt-2 text-sm">Draw, guess, and win.</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. AbhishekKTech"
+              className="w-full px-4 py-3 bg-[#0B0F19] border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <button
+            onClick={handleCreateRoom}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-blue-500/20"
           >
-            Documentation
-          </a>
+            Create New Room
+          </button>
+
+          <div className="relative flex py-3 items-center">
+            <div className="flex-grow border-t border-gray-700"></div>
+            <span className="flex-shrink-0 mx-4 text-gray-500 text-sm font-medium">OR JOIN WITH CODE</span>
+            <div className="flex-grow border-t border-gray-700"></div>
+          </div>
+
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              placeholder="Enter 6-digit Room ID"
+              className="w-full px-4 py-3 bg-[#0B0F19] border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white uppercase transition-all"
+            />
+            <button
+              onClick={handleJoinRoom}
+              className="w-full flex items-center justify-center gap-2 bg-[#2D1B4E] border border-purple-500/30 hover:bg-[#3D256A] text-purple-300 font-bold py-3 px-4 rounded-xl transition duration-200"
+            >
+              <Users size={20} />
+              Join Room
+            </button>
+          </div>
         </div>
-      </main>
+
+      </div>
     </div>
   );
 }
