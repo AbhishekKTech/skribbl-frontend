@@ -1,137 +1,248 @@
-# Skribbl.io Clone - Real-Time Multiplayer Game
+# Skribbl.io Clone - Real-Time Multiplayer Drawing Game
 
-A full-stack, real-time multiplayer drawing and guessing game built as a clone of skribbl.io. This project features a strict turn-based game loop, real-time canvas synchronization, time-based scoring algorithms, and a custom Object-Oriented game engine.
+**Live Demo Video:**
+https://youtu.be/dsrWwDutcLw?si=jVqoMPMQlV90A0oH
 
-## Live Deployment
-
-- **Frontend (Play Here):** [https://skribbl-frontend-mocha.vercel.app](https://skribbl-frontend-mocha.vercel.app)
-- **Backend API Endpoint:** [https://skribbl-backend-axey.onrender.com](https://skribbl-backend-axey.onrender.com)
+A full-stack, real-time multiplayer drawing and guessing game inspired by Skribbl.io. The project implements a strict turn-based game loop, real-time canvas synchronization, time-based scoring, and a custom Object-Oriented game engine.
 
 ---
 
-## Architecture Overview
+# Live Deployment
 
-The application utilizes a decoupled Full-Stack architecture to ensure low latency and scalable gameplay:
+**Frontend:**
+https://skribbl-frontend-mocha.vercel.app
 
-1. **Frontend (Next.js & HTML5 Canvas):**
-   - Manages the modern "Glassmorphism" UI, Room configurations, and Game phases (Lobby, Word Selection, Drawing, Reveal, Game Over)
-   - **Canvas Engine:** Uses native HTML5 `<canvas>` to capture `onMouseMove` events. Stroke coordinates `(x0, y0, x1, y1)` and brush settings are emitted instantly to the server
-   - **Undo Logic:** Maintains an array of Base64 image snapshots (`canvasHistory`). On undo, the previous snapshot is redrawn using `drawImage()`
-
-2. **Backend Engine (Node.js & Express):**
-   - Acts as the authoritative source of truth. It manages room states, turn logic, and timers to prevent any client-side manipulation
-
-3. **Real-Time Sync (Socket.IO):**
-   - Facilitates bi-directional communication. Drawing strokes (`draw_data`), canvas clears (`canvas_clear`), and state undos (`undo_canvas`) are broadcasted at high frequencies with minimal overhead
+**Backend API:**
+https://skribbl-backend-axey.onrender.com
 
 ---
 
-## Core Mechanics & Features
+# Architecture Overview
 
-- **Multiplayer Rooms:** Host can create rooms with custom configurable settings (Max Players: 2-20, Rounds: 2-10, Draw Time: 15-240s)
-- **Turn-Based Rounds:** System automatically tracks `drawnPlayers`. A drawer is given 15 seconds to choose from 3 random words before the timer strictly begins
-- **Real-Time Drawing:** Fluid stroke rendering synced across all active clients in the room. Tools include multiple colors, clear canvas, and an Undo feature
-- **Smart Scoring Algorithm:** Dynamic points are awarded based on how fast a player guesses correctly: `Math.floor((timeLeft / totalTime) * 500) + 100`
-- **Game End & Leaderboard:** Sorts players strictly by `totalPoints` to announce the Winner and display final standings
+The application follows a decoupled full-stack architecture designed for low latency and scalable multiplayer gameplay.
+
+## 1. Frontend (Next.js + HTML5 Canvas)
+
+Responsible for:
+
+* Room creation and management
+* Game phases (Lobby, Word Selection, Drawing, Reveal, Game Over)
+* Glassmorphism-based user interface
+
+### Canvas Engine
+
+* Uses native HTML5 `<canvas>`
+* Captures drawing events in real time
+* Sends stroke coordinates `(x0, y0, x1, y1)` and brush settings to the server instantly
+
+### Undo System
+
+* Stores Base64 image snapshots in `canvasHistory`
+* Restores previous canvas state using `drawImage()`
+
+---
+
+## 2. Backend Engine (Node.js + Express)
+
+Acts as the authoritative game server.
+
+Responsibilities include:
+
+* Room management
+* Turn handling
+* Timer management
+* Score calculation
+* State synchronization
 
 ---
 
-## OOP Implementation
+## 3. Real-Time Communication (Socket.IO)
 
-As per the bonus requirements, the WebSocket backend is strictly structured using **Object-Oriented Programming (OOP)** principles for high maintainability:
+Provides bi-directional communication between clients and server.
 
-- `SessionEngine`: A singleton coordinator that manages the lifecycle of all active `GameSession` maps
-- `GameSession`: Encapsulates the core game loop, timers, word selection logic, player turns, and broadcast events for a specific room
-- `Participant`: Represents an individual player, maintaining their specific state like `connectionId`, `displayName`, `totalPoints`, and `isCurrentlyDrawing` status
+Events include:
+
+* `draw_data`
+* `canvas_clear`
+* `undo_canvas`
+* Room updates
+* Score updates
+* Game state transitions
+
+---
+
+# Core Features
+
+## Multiplayer Rooms
+
+Hosts can configure:
+
+* Players: 2–20
+* Rounds: 2–10
+* Draw Time: 15–240 seconds
+
+## Turn-Based Gameplay
+
+* Tracks completed drawers using `drawnPlayers`
+* Drawer receives 3 random words
+* 15-second word selection phase
+* Drawing timer starts automatically
+
+## Real-Time Drawing
+
+Features:
+
+* Smooth synchronized drawing
+* Multiple brush colors
+* Canvas clearing
+* Undo functionality
+
+## Dynamic Scoring System
+
+Points are awarded based on how quickly a player guesses the word:
+
+```javascript
+Math.floor((timeLeft / totalTime) * 500) + 100
+```
+
+## Leaderboard & Winner Detection
+
+* Players ranked by `totalPoints`
+* Final leaderboard displayed after all rounds
+* Winner announced automatically
 
 ---
 
-## Tech Stack
+# Object-Oriented Design
 
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| Frontend | Next.js, React, Tailwind CSS | UI, Routing, and Glassmorphism Styling |
-| Canvas | HTML5 Canvas API | Raw stroke rendering and Base64 state snapshots |
-| Backend | Node.js, Express.js | API structure and server environment |
-| WebSockets | Socket.IO | High-frequency bi-directional data transfer |
-| Deployment | Vercel (Frontend), Render (Backend) | Serverless UI hosting and persistent WS backend |
+The backend is structured using Object-Oriented Programming principles.
 
+## SessionEngine
+
+Singleton coordinator responsible for:
+
+* Managing active game sessions
+* Room lifecycle management
+
+## GameSession
+
+Handles:
+
+* Core game loop
+* Turn rotation
+* Word selection
+* Timers
+* Scoring
+* Event broadcasting
+
+## Participant
+
+Represents an individual player and stores:
+
+* Connection ID
+* Display Name
+* Total Points
+* Drawing Status
 
 ---
-## 📁 Frontend Project Structure (Next.js)
 
+# Technology Stack
+
+| Layer      | Technology                   | Purpose                    |
+| ---------- | ---------------------------- | -------------------------- |
+| Frontend   | Next.js, React, Tailwind CSS | UI, Routing, Styling       |
+| Canvas     | HTML5 Canvas API             | Drawing & State Management |
+| Backend    | Node.js, Express.js          | Server & Game Logic        |
+| WebSockets | Socket.IO                    | Real-Time Communication    |
+| Deployment | Vercel, Render               | Hosting & Deployment       |
+
+---
+
+# Frontend Project Structure
+
+```text
 skribbl-frontend/
-├── public/                     # Static assets
+├── public/
 ├── src/
 │   ├── app/
 │   │   ├── room/[id]/
-│   │   │   └── page.tsx        # Core Game UI (Canvas, Chat, Leaderboard)
-│   │   ├── favicon.ico         # App icon
-│   │   ├── globals.css         # Global styling and Tailwind directives
-│   │   ├── layout.tsx          # Global layout and fonts
-│   │   └── page.tsx            # Lobby UI (Room creation & joining)
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
 │   └── lib/
-│       └── socket.ts           # Socket.IO client connection setup
-├── eslint.config.mjs           # ESLint configuration
-├── next.config.ts              # Next.js configuration
-├── package.json                # Frontend dependencies & scripts
-├── postcss.config.mjs          # PostCSS configuration
-└── tsconfig.json               # TypeScript configuration
-
+│       └── socket.ts
+├── eslint.config.mjs
+├── next.config.ts
+├── package.json
+├── postcss.config.mjs
+└── tsconfig.json
+```
 
 ---
-## Backend Project Structure (Node.js)
 
+# Backend Project Structure
 
+```text
 skribbl-backend/
 ├── src/
-│   ├── config/                 # Environment and app configuration
+│   ├── config/
 │   ├── coordinators/
-│   │   └── SessionEngine.js    # Singleton manager for all active rooms
+│   │   └── SessionEngine.js
 │   ├── domain/
-│   │   ├── GameSession.js      # Core game loop, scoring, and timers
-│   │   └── Participant.js      # Player data (socket ID, points, name)
-│   └── main.js                 # Entry point & WebSocket server setup
-├── .gitignore                  # Git ignore rules
-├── package-lock.json           # Locked dependency versions
-└── package.json                # Backend dependencies & scripts
+│   │   ├── GameSession.js
+│   │   └── Participant.js
+│   └── main.js
+├── .gitignore
+├── package-lock.json
+└── package.json
+```
 
 ---
 
-## Local Setup Instructions
+# Local Setup
 
-Follow these steps to run the game locally on your machine.
-
-### 1. Start the Backend
+## 1. Start Backend
 
 ```bash
-# Navigate to the backend directory
 cd skribbl-backend
 
-# Install dependencies
 npm install
 
-# Start the Node.js server (Runs on port 4000)
 node src/main.js
 ```
 
-### 2. Start the Frontend
+Backend runs on:
 
-```bash
-# Navigate to the frontend directory
-cd skribbl-frontend
-
-# Install dependencies
-npm install
-
-# IMPORTANT: For local testing, update src/lib/socket.ts to use http://localhost:4000
-
-# Start the Next.js development server
-npm run dev
+```text
+http://localhost:4000
 ```
-
-The app will be available at http://localhost:3000
 
 ---
 
-Designed & Developed by AbhishekKTech https://www.linkedin.com/in/abhishekktech/
+## 2. Start Frontend
+
+```bash
+cd skribbl-frontend
+
+npm install
+
+# Update src/lib/socket.ts
+# Change API URL to:
+# http://localhost:4000
+
+npm run dev
+```
+
+Frontend runs on:
+
+```text
+http://localhost:3000
+```
+
+---
+
+# Author
+
+Designed and Developed by **Abhishek K Tech**
