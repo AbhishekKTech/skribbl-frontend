@@ -17,6 +17,20 @@ https://skribbl-backend-axey.onrender.com
 
 ---
 
+## 📸 Application Screenshots
+
+<img width="1442" height="862" alt="looby" src="https://github.com/user-attachments/assets/b87af9f8-d55a-4b21-85d3-7010d61a154f" />
+
+*Room Lobby and Configuration UI*
+
+<img width="1873" height="872" alt="wait_area" src="https://github.com/user-attachments/assets/e32da0f8-5e6c-4bcb-9622-e38cae0333e3" />
+
+*Real-time Canvas Sync and Chat Guessing*
+
+<img width="1872" height="872" alt="win" src="https://github.com/user-attachments/assets/adb9bf46-6398-42c1-ad90-88a0afceb740" />
+
+---
+
 # Architecture Overview
 
 The application follows a decoupled full-stack architecture designed for low latency and scalable multiplayer gameplay.
@@ -245,4 +259,4 @@ http://localhost:3000
 
 # Author
 
-Designed and Developed by **Abhishek K Tech**
+Designed and Developed by **Abhishek Sharma** [meetabhishek.in](https://www.meetabhishek.in/)
