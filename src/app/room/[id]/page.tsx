@@ -1,4 +1,8 @@
+// ==========================================
 // src/app/room/[id]/page.tsx
+// PURPOSE: THE GAME ROOM (Neon Glassmorphism UI)
+// ==========================================
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -11,7 +15,7 @@ export default function GameRoomScreen() {
   const searchParams = useSearchParams();
   const playerName = searchParams.get('name') || 'Player';
 
-  // --- Game State (100% UNTOUCHED) ---
+    // Game state
   const [players, setPlayers] = useState<any[]>([]);
   const [messages, setMessages] = useState<{name: string, text: string, type: 'chat'|'system'}[]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -23,7 +27,7 @@ export default function GameRoomScreen() {
   const [wordChoices, setWordChoices] = useState<string[]>([]);
   const [gameOverData, setGameOverData] = useState<any>(null);
 
-  // --- Canvas State (100% UNTOUCHED) ---
+    // Canvas state
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasHistory = useRef<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -45,7 +49,7 @@ export default function GameRoomScreen() {
     socket.on('connect', triggerJoin);
     socket.on('update_players', (playersList) => setPlayers(playersList));
 
-    // --- CANVAS EVENTS ---
+    // Canvas events
     socket.on('draw_data', (stroke) => {
         drawLineOnCanvas(stroke.x0, stroke.y0, stroke.x1, stroke.y1, stroke.color, stroke.size);
     });
@@ -65,7 +69,7 @@ export default function GameRoomScreen() {
         }
     });
 
-    // --- GAME LOOP EVENTS ---
+    // Game events
     socket.on('round_start', (data) => {
         setPhase(data.phase);
         setCurrentDrawerId(data.drawerId);
@@ -138,7 +142,7 @@ export default function GameRoomScreen() {
     };
   }, [roomId, playerName]);
 
-  // --- DRAWING LOGIC (100% UNTOUCHED) ---
+    // Drawing logic
   const clearLocalCanvas = () => {
       const canvas = canvasRef.current;
       if (canvas) {
@@ -254,11 +258,11 @@ export default function GameRoomScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0B0B1A] via-[#16123A] to-[#0B0B1A] text-white flex flex-col p-4 md:p-6 font-sans relative overflow-hidden">
       
-      {/* Background Glowing Orbs for that Premium Vibe */}
+    {/* Background orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* Top Bar (Glassmorphism) */}
+    {/* Top bar */}
       <div className="z-10 flex justify-between items-center bg-white/5 backdrop-blur-xl border border-white/10 p-4 px-8 rounded-3xl mb-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
           <div>
               <span className="text-gray-400 text-xs font-bold tracking-[0.2em] uppercase block mb-1">Room Code</span>
@@ -280,7 +284,7 @@ export default function GameRoomScreen() {
       {/* Main Content Layout */}
       <div className="flex flex-1 gap-6 z-10 w-full max-w-[1600px] mx-auto">
           
-          {/* Left: Players List (Glassmorphism) */}
+          {/* Left: Players list */}
           <div className="w-72 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex flex-col shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
               <h3 className="font-bold text-gray-300 mb-4 border-b border-white/10 pb-3 tracking-widest uppercase text-sm">Players</h3>
               <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
@@ -301,10 +305,10 @@ export default function GameRoomScreen() {
               )}
           </div>
 
-          {/* Center: The Canvas & Modals */}
+          {/* Center: canvas and modals */}
           <div className="flex-1 flex flex-col items-center justify-start relative min-w-[800px]">
               
-              {/* MODAL: Word Selection */}
+              {/* Modal: word selection */}
               {phase === 'WordSelection' && (
                   <div className="absolute inset-0 bg-[#0B0B1A]/80 backdrop-blur-md flex flex-col items-center justify-center z-20 rounded-3xl">
                       {isMyTurn ? (
@@ -332,7 +336,7 @@ export default function GameRoomScreen() {
                   </div>
               )}
 
-              {/* MODAL: Game Over Leaderboard */}
+              {/* Modal: game over */}
               {phase === 'GameOver' && gameOverData && (
                   <div className="absolute inset-0 bg-[#0B0B1A]/90 backdrop-blur-xl flex flex-col items-center justify-center z-30 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                       <h1 className="text-7xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-6 drop-shadow-[0_0_25px_rgba(250,204,21,0.6)] uppercase">Game Over!</h1>
@@ -350,7 +354,7 @@ export default function GameRoomScreen() {
                   </div>
               )}
 
-              {/* The Canvas */}
+              {/* The canvas */}
               <div className={`bg-[#0d1126] rounded-3xl overflow-hidden border-2 ${isMyTurn && phase === 'ActiveDrawing' ? 'border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.3)] cursor-crosshair' : 'border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] cursor-not-allowed'} w-[800px] h-[600px] relative transition-all duration-300`}>
                   <canvas
                       ref={canvasRef}
@@ -367,7 +371,7 @@ export default function GameRoomScreen() {
                   )}
               </div>
 
-              {/* Canvas Controls (Glassmorphism Pill) */}
+              {/* Canvas controls */}
               <div className={`mt-6 flex items-center gap-5 bg-white/5 backdrop-blur-xl px-6 py-4 rounded-full border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-opacity duration-300 ${isMyTurn && phase === 'ActiveDrawing' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                   
                   {/* Colors */}
@@ -395,7 +399,7 @@ export default function GameRoomScreen() {
               </div>
           </div>
 
-          {/* Right: Chat & Guesses (Glassmorphism) */}
+          {/* Right: chat and guesses */}
           <div className="w-80 bg-white/5 backdrop-blur-xl rounded-3xl flex flex-col border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden">
               <div className="flex-1 p-5 overflow-y-auto space-y-3 custom-scrollbar">
                   {messages.map((msg, i) => (

@@ -11,7 +11,7 @@ import { socket } from '@/lib/socket';
 import { Dices, Settings, Play, Users, Gamepad2 } from 'lucide-react';
 
 export default function LobbyScreen() {
-  // --- Core Logic States (100% UNTOUCHED) ---
+  // State management for user input and room settings
   const [name, setName] = useState('');
   const [roomId, setRoomId] = useState('');
   const router = useRouter();
