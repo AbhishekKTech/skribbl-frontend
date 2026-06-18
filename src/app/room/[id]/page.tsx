@@ -1,6 +1,6 @@
 // ==========================================
 // src/app/room/[id]/page.tsx
-// PURPOSE: THE GAME ROOM (Neon Glassmorphism UI)
+// PURPOSE: THE GAME ROOM (Neon Glassmorphism UI) - RESPONSIVE FIXED
 // ==========================================
 
 'use client';
@@ -15,7 +15,7 @@ export default function GameRoomScreen() {
   const searchParams = useSearchParams();
   const playerName = searchParams.get('name') || 'Player';
 
-    // Game state
+  // Game state
   const [players, setPlayers] = useState<any[]>([]);
   const [messages, setMessages] = useState<{name: string, text: string, type: 'chat'|'system'}[]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -27,7 +27,7 @@ export default function GameRoomScreen() {
   const [wordChoices, setWordChoices] = useState<string[]>([]);
   const [gameOverData, setGameOverData] = useState<any>(null);
 
-    // Canvas state
+  // Canvas state
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasHistory = useRef<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -142,7 +142,7 @@ export default function GameRoomScreen() {
     };
   }, [roomId, playerName]);
 
-    // Drawing logic
+  // Drawing logic
   const clearLocalCanvas = () => {
       const canvas = canvasRef.current;
       if (canvas) {
@@ -167,38 +167,51 @@ export default function GameRoomScreen() {
       ctx.closePath();
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (socket.id !== currentDrawerId || phase !== 'ActiveDrawing') return; 
-
+  // 🛠️ Updated for Canvas Scaling & Mobile Touch
+  const getCoordinates = (e: any) => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
-
+      if (!canvas) return null;
+      
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
 
-      setIsDrawing(true);
-      lastPos.current = { x, y };
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+
+      if (e.touches && e.touches.length > 0) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+      }
+
+      return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+      };
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: any) => {
+      if (socket.id !== currentDrawerId || phase !== 'ActiveDrawing') return; 
+      const coords = getCoordinates(e);
+      if (!coords) return;
+
+      setIsDrawing(true);
+      lastPos.current = coords;
+  };
+
+  const draw = (e: any) => {
       if (!isDrawing || !lastPos.current || socket.id !== currentDrawerId) return;
+      const coords = getCoordinates(e);
+      if (!coords) return;
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      drawLineOnCanvas(lastPos.current.x, lastPos.current.y, x, y, color, brushSize);
+      drawLineOnCanvas(lastPos.current.x, lastPos.current.y, coords.x, coords.y, color, brushSize);
 
       socket.emit('draw_data', {
           roomId,
-          stroke: { x0: lastPos.current.x, y0: lastPos.current.y, x1: x, y1: y, color, size: brushSize }
+          stroke: { x0: lastPos.current.x, y0: lastPos.current.y, x1: coords.x, y1: coords.y, color, size: brushSize }
       });
 
-      lastPos.current = { x, y };
+      lastPos.current = coords;
   };
 
   const stopDrawing = () => {
@@ -256,81 +269,70 @@ export default function GameRoomScreen() {
   const isMyTurn = socket.id === currentDrawerId;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0B0B1A] via-[#16123A] to-[#0B0B1A] text-white flex flex-col p-4 md:p-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#0B0B1A] via-[#16123A] to-[#0B0B1A] text-white flex flex-col p-2 md:p-4 lg:p-6 font-sans relative overflow-hidden">
       
     {/* Background orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-cyan-600/20 rounded-full blur-[80px] md:blur-[120px] pointer-events-none"></div>
 
-    {/* Top bar */}
-      <div className="z-10 flex justify-between items-center bg-white/5 backdrop-blur-xl border border-white/10 p-4 px-8 rounded-3xl mb-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
-          <div>
-              <span className="text-gray-400 text-xs font-bold tracking-[0.2em] uppercase block mb-1">Room Code</span>
-              <span className="font-black text-2xl uppercase tracking-widest text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{roomId}</span>
+    {/* Top bar - Made flex-wrap and responsive text for mobile */}
+      {/* Top bar - Fixed with Grid for perfect centering and one-line layout */}
+      <div className="z-10 grid grid-cols-3 items-center bg-white/5 backdrop-blur-xl border border-white/10 p-3 md:p-4 px-4 md:px-8 rounded-2xl md:rounded-3xl mb-4 md:mb-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] w-full">
+          
+          {/* Left: Room Code */}
+          <div className="text-left overflow-hidden">
+              <span className="text-gray-400 text-[8px] md:text-xs font-bold tracking-[0.2em] uppercase block mb-1">Room Code</span>
+              <span className="font-black text-sm md:text-2xl uppercase tracking-widest text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] truncate block">
+                  {roomId}
+              </span>
           </div>
-          <div className="text-center">
-              <span className="text-4xl tracking-[0.2em] text-cyan-400 font-mono font-bold drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
+          
+          {/* Center: Word to Draw (Perfectly Centered) */}
+          <div className="text-center flex justify-center items-center overflow-hidden px-1 md:px-2">
+              <span className="text-base md:text-4xl tracking-[0.05em] md:tracking-[0.2em] text-cyan-400 font-mono font-bold drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] truncate max-w-full">
                   {wordToDraw || 'WAITING...'}
               </span>
           </div>
-          <div className="text-right">
-              <span className="text-gray-400 text-xs font-bold tracking-[0.2em] uppercase block mb-1">Time Left</span>
-              <span className={`font-black text-3xl ${timer <= 10 && timer > 0 ? 'text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.8)] animate-pulse' : 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]'}`}>
+          
+          {/* Right: Time Left */}
+          <div className="text-right overflow-hidden">
+              <span className="text-gray-400 text-[8px] md:text-xs font-bold tracking-[0.2em] uppercase block mb-1">Time Left</span>
+              <span className={`font-black text-lg md:text-3xl block ${timer <= 10 && timer > 0 ? 'text-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.8)] animate-pulse' : 'text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]'}`}>
                   {timer}s
               </span>
           </div>
+          
       </div>
 
-      {/* Main Content Layout */}
-      <div className="flex flex-1 gap-6 z-10 w-full max-w-[1600px] mx-auto">
+      {/* Main Content Layout - Stacks on mobile, row on lg screens */}
+      <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 z-10 w-full max-w-[1600px] mx-auto">
           
-          {/* Left: Players list */}
-          <div className="w-72 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 flex flex-col shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
-              <h3 className="font-bold text-gray-300 mb-4 border-b border-white/10 pb-3 tracking-widest uppercase text-sm">Players</h3>
-              <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                  {players.length === 0 && <p className="text-gray-500 text-sm font-medium">Waiting for players...</p>}
-                  {players.map((p, i) => (
-                      <div key={i} className={`flex justify-between items-center p-3 rounded-2xl border transition-all ${p.connectionId === currentDrawerId ? 'bg-cyan-500/10 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-black/20 border-white/5'}`}>
-                          <span className="font-semibold text-gray-200 truncate pr-2">
-                              {p.displayName} {p.connectionId === currentDrawerId && ' ✏️'}
-                          </span>
-                          <span className="text-sm font-bold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">{p.totalPoints} <span className="text-xs text-gray-500">pts</span></span>
-                      </div>
-                  ))}
-              </div>
-              {phase === 'Lobby' && (
-                  <button onClick={handleStartGame} className="mt-5 w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-bold tracking-wider shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] transition-all transform hover:-translate-y-1">
-                      START GAME
-                  </button>
-              )}
-          </div>
-
-          {/* Center: canvas and modals */}
-          <div className="flex-1 flex flex-col items-center justify-start relative min-w-[800px]">
+          {/* Canvas Section - Order 1 on Mobile, Center on lg */}
+          <div className="order-1 lg:order-2 flex-1 flex flex-col items-center justify-start relative w-full lg:min-w-[800px]">
               
               {/* Modal: word selection */}
               {phase === 'WordSelection' && (
-                  <div className="absolute inset-0 bg-[#0B0B1A]/80 backdrop-blur-md flex flex-col items-center justify-center z-20 rounded-3xl">
+                  <div className="absolute inset-0 bg-[#0B0B1A]/80 backdrop-blur-md flex flex-col items-center justify-center z-20 rounded-2xl md:rounded-3xl p-4">
                       {isMyTurn ? (
-                          <div className="bg-white/10 backdrop-blur-xl p-10 rounded-3xl border border-white/20 shadow-[0_0_50px_rgba(168,85,247,0.3)] text-center animate-fade-in">
-                              <h2 className="text-4xl font-black tracking-widest text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.8)] mb-8 uppercase">Choose a word</h2>
-                              <div className="flex gap-6 justify-center">
+                          <div className="bg-white/10 backdrop-blur-xl p-6 md:p-10 rounded-2xl md:rounded-3xl border border-white/20 shadow-[0_0_50px_rgba(168,85,247,0.3)] text-center animate-fade-in w-full max-w-lg">
+                              <h2 className="text-2xl md:text-4xl font-black tracking-widest text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.8)] mb-6 md:mb-8 uppercase">Choose a word</h2>
+                              <div className="flex flex-col md:flex-row gap-3 md:gap-6 justify-center">
                                   {wordChoices.map(w => (
                                       <button 
                                           key={w} 
                                           onClick={() => socket.emit('choose_word', { roomId, word: w })} 
-                                          className="bg-black/40 border border-purple-500/50 hover:bg-purple-600/40 px-8 py-4 rounded-2xl font-bold text-2xl text-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+                                          className="bg-black/40 border border-purple-500/50 hover:bg-purple-600/40 px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-bold text-lg md:text-2xl text-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
                                       >
                                           {w}
                                       </button>
                                   ))}
                               </div>
-                              <p className="text-cyan-400 mt-8 font-semibold tracking-widest text-sm">AUTO-SELECTING IN {timer}S</p>
+                              <p className="text-cyan-400 mt-6 md:mt-8 font-semibold tracking-widest text-xs md:text-sm">AUTO-SELECTING IN {timer}S</p>
                           </div>
                       ) : (
                           <div className="text-center animate-pulse">
-                              <div className="text-7xl mb-6 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">🤔</div>
-                              <h2 className="text-3xl font-bold text-cyan-400 tracking-widest drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">WAITING FOR DRAWER...</h2>
+                              <div className="text-5xl md:text-7xl mb-4 md:mb-6 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">🤔</div>
+                              <h2 className="text-xl md:text-3xl font-bold text-cyan-400 tracking-widest drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">WAITING FOR DRAWER...</h2>
                           </div>
                       )}
                   </div>
@@ -338,88 +340,116 @@ export default function GameRoomScreen() {
 
               {/* Modal: game over */}
               {phase === 'GameOver' && gameOverData && (
-                  <div className="absolute inset-0 bg-[#0B0B1A]/90 backdrop-blur-xl flex flex-col items-center justify-center z-30 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                      <h1 className="text-7xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-6 drop-shadow-[0_0_25px_rgba(250,204,21,0.6)] uppercase">Game Over!</h1>
-                      <h2 className="text-4xl text-white mb-10 font-medium">Winner: <span className="font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">{gameOverData.winner?.name}</span> 🏆</h2>
+                  <div className="absolute inset-0 bg-[#0B0B1A]/90 backdrop-blur-xl flex flex-col items-center justify-center z-30 rounded-2xl md:rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] p-4">
+                      <h1 className="text-4xl md:text-7xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-4 md:mb-6 drop-shadow-[0_0_25px_rgba(250,204,21,0.6)] uppercase text-center">Game Over!</h1>
+                      <h2 className="text-2xl md:text-4xl text-white mb-6 md:mb-10 font-medium text-center">Winner: <span className="font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">{gameOverData.winner?.name}</span> 🏆</h2>
                       
-                      <div className="bg-white/5 backdrop-blur-xl p-8 rounded-3xl w-[450px] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
-                          <h3 className="text-xl font-black mb-6 text-gray-300 border-b border-white/10 pb-4 text-center uppercase tracking-[0.3em]">Final Standings</h3>
+                      <div className="bg-white/5 backdrop-blur-xl p-5 md:p-8 rounded-2xl md:rounded-3xl w-full max-w-[450px] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] max-h-[50vh] overflow-y-auto custom-scrollbar">
+                          <h3 className="text-lg md:text-xl font-black mb-4 md:mb-6 text-gray-300 border-b border-white/10 pb-3 md:pb-4 text-center uppercase tracking-[0.3em]">Final Standings</h3>
                           {gameOverData.leaderboard.map((p: any, i: number) => (
-                              <div key={i} className={`flex justify-between items-center my-4 p-4 rounded-2xl transition-all ${i === 0 ? 'bg-yellow-500/20 border border-yellow-500/50 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : 'bg-black/40 border border-white/5'}`}>
-                                  <span className={`font-bold text-xl ${i === 0 ? 'text-yellow-400' : 'text-gray-200'}`}>#{i + 1} {p.name}</span>
-                                  <span className="text-cyan-400 font-black text-2xl drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">{p.score} <span className="text-xs text-gray-500 font-medium">pts</span></span>
+                              <div key={i} className={`flex justify-between items-center my-3 md:my-4 p-3 md:p-4 rounded-xl md:rounded-2xl transition-all ${i === 0 ? 'bg-yellow-500/20 border border-yellow-500/50 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : 'bg-black/40 border border-white/5'}`}>
+                                  <span className={`font-bold text-lg md:text-xl ${i === 0 ? 'text-yellow-400' : 'text-gray-200'} truncate mr-2`}>#{i + 1} {p.name}</span>
+                                  <span className="text-cyan-400 font-black text-xl md:text-2xl drop-shadow-[0_0_10px_rgba(34,211,238,0.5)] whitespace-nowrap">{p.score} <span className="text-[10px] md:text-xs text-gray-500 font-medium">pts</span></span>
                               </div>
                           ))}
                       </div>
                   </div>
               )}
 
-              {/* The canvas */}
-              <div className={`bg-[#0d1126] rounded-3xl overflow-hidden border-2 ${isMyTurn && phase === 'ActiveDrawing' ? 'border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.3)] cursor-crosshair' : 'border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] cursor-not-allowed'} w-[800px] h-[600px] relative transition-all duration-300`}>
+              {/* The canvas - Using aspect-video and max-width for responsiveness */}
+              <div className={`w-full max-w-[800px] aspect-[4/3] bg-[#0d1126] rounded-2xl md:rounded-3xl overflow-hidden border-2 ${isMyTurn && phase === 'ActiveDrawing' ? 'border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.3)] cursor-crosshair' : 'border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] cursor-not-allowed'} relative transition-all duration-300`}>
                   <canvas
                       ref={canvasRef}
-                      width={800}
+                      width={800} // Internal resolution stays 800x600
                       height={600}
-                      className="w-full h-full bg-[#0d1126]"
+                      className="w-full h-full bg-[#0d1126] touch-none"
                       onMouseDown={startDrawing}
                       onMouseMove={draw}
                       onMouseUp={stopDrawing}
                       onMouseOut={stopDrawing}
+                      onTouchStart={startDrawing}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDrawing}
+                      onTouchCancel={stopDrawing}
                   />
                   {!isMyTurn && phase === 'ActiveDrawing' && (
                       <div className="absolute inset-0 bg-transparent pointer-events-none"></div>
                   )}
               </div>
 
-              {/* Canvas controls */}
-              <div className={`mt-6 flex items-center gap-5 bg-white/5 backdrop-blur-xl px-6 py-4 rounded-full border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-opacity duration-300 ${isMyTurn && phase === 'ActiveDrawing' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              {/* Canvas controls (Optimized for Mobile) */}
+              <div className={`mt-2 md:mt-6 w-full max-w-[800px] flex flex-wrap justify-center items-center gap-1.5 md:gap-5 bg-white/5 backdrop-blur-xl px-2 md:px-6 py-2 md:py-4 rounded-xl md:rounded-full border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-opacity duration-300 ${isMyTurn && phase === 'ActiveDrawing' ? 'opacity-100 flex' : 'opacity-0 pointer-events-none hidden lg:flex'}`}>
                   
-                  {/* Colors */}
-                  <div className="flex gap-3">
+                  {/* Colors - Smaller on mobile */}
+                  <div className="flex gap-1.5 md:gap-3 flex-wrap justify-center">
                       {['#ffffff', '#ef4444', '#3b82f6', '#22c55e', '#eab308'].map((c) => (
                           <button 
                               key={c} 
                               onClick={() => setColor(c)} 
                               style={{ backgroundColor: c }}
-                              className={`w-10 h-10 rounded-full hover:scale-110 transition-transform shadow-lg ${color === c ? 'ring-4 ring-white/50 scale-110' : 'border border-white/20'}`}
+                              className={`w-6 h-6 md:w-10 md:h-10 rounded-full hover:scale-110 transition-transform shadow-lg ${color === c ? 'ring-2 md:ring-4 ring-white/50 scale-110' : 'border border-white/20'}`}
                           ></button>
                       ))}
                   </div>
                   
-                  <div className="w-px h-8 bg-white/20 mx-2"></div>
+                  <div className="hidden md:block w-px h-8 bg-white/20 mx-2"></div>
                   
-                  {/* Tools */}
-                  <button onClick={handleUndoClick} className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 font-bold px-4 py-2 hover:bg-yellow-400/10 rounded-xl transition-colors">
-                      ↩ <span className="tracking-wider uppercase text-sm">Undo</span>
-                  </button>
-                  
-                  <button onClick={handleClearCanvasClick} className="flex items-center gap-2 text-red-400 hover:text-red-300 font-bold px-4 py-2 hover:bg-red-400/10 rounded-xl transition-colors">
-                      🗑️ <span className="tracking-wider uppercase text-sm">Clear</span>
-                  </button>
+                  {/* Tools - Compact text and padding on mobile */}
+                  <div className="flex gap-1 md:gap-2 mt-1 md:mt-0 w-full md:w-auto justify-center">
+                      <button onClick={handleUndoClick} className="flex items-center justify-center gap-1 md:gap-2 text-yellow-400 hover:text-yellow-300 font-bold px-2 md:px-4 py-1.5 md:py-2 hover:bg-yellow-400/10 rounded-lg md:rounded-xl transition-colors">
+                          ↩ <span className="tracking-wider uppercase text-[10px] md:text-sm">Undo</span>
+                      </button>
+                      
+                      <button onClick={handleClearCanvasClick} className="flex items-center justify-center gap-1 md:gap-2 text-red-400 hover:text-red-300 font-bold px-2 md:px-4 py-1.5 md:py-2 hover:bg-red-400/10 rounded-lg md:rounded-xl transition-colors">
+                          🗑️ <span className="tracking-wider uppercase text-[10px] md:text-sm">Clear</span>
+                      </button>
+                  </div>
               </div>
           </div>
 
-          {/* Right: chat and guesses */}
-          <div className="w-80 bg-white/5 backdrop-blur-xl rounded-3xl flex flex-col border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden">
-              <div className="flex-1 p-5 overflow-y-auto space-y-3 custom-scrollbar">
+          {/* Chat Section - Optimized Input and Message Sizes for Mobile */}
+          <div className="order-2 lg:order-3 w-full lg:w-80 h-[22vh] lg:h-[600px] bg-white/5 backdrop-blur-xl rounded-xl md:rounded-3xl flex flex-col border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden">
+              <div className="flex-1 p-2 md:p-5 overflow-y-auto space-y-1.5 md:space-y-3 custom-scrollbar">
                   {messages.map((msg, i) => (
-                      <div key={i} className={`text-sm p-3 rounded-2xl ${msg.type === 'system' ? 'bg-cyan-500/10 text-cyan-300 font-bold border border-cyan-500/20' : i % 2 === 0 ? 'bg-black/20 text-gray-200' : 'bg-transparent text-gray-200'}`}>
+                      <div key={i} className={`text-xs md:text-sm p-2 md:p-3 rounded-lg md:rounded-2xl ${msg.type === 'system' ? 'bg-cyan-500/10 text-cyan-300 font-bold border border-cyan-500/20' : i % 2 === 0 ? 'bg-black/20 text-gray-200' : 'bg-transparent text-gray-200'}`}>
                           {msg.type === 'chat' && <span className="font-bold text-purple-400 tracking-wide">{msg.name}: </span>}
                           {msg.text}
                       </div>
                   ))}
               </div>
-              <form onSubmit={submitGuess} className="p-4 bg-black/40 border-t border-white/10">
+              <form onSubmit={submitGuess} className="p-1.5 md:p-4 bg-black/40 border-t border-white/10">
                   <input
                       type="text"
                       value={currentGuess}
                       onChange={(e) => setCurrentGuess(e.target.value)}
                       disabled={isMyTurn && phase === 'ActiveDrawing'}
-                      placeholder={isMyTurn && phase === 'ActiveDrawing' ? "Drawing! No chatting." : "Type your guess here..."}
-                      className="w-full px-5 py-4 bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 rounded-2xl focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 transition-all font-medium text-white placeholder-gray-500 tracking-wide"
+                      placeholder={isMyTurn && phase === 'ActiveDrawing' ? "Drawing! No chatting." : "Type your guess..."}
+                      className="w-full px-3 py-1.5 md:px-5 md:py-4 bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 rounded-md md:rounded-2xl focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 transition-all font-medium text-xs md:text-base text-white placeholder-gray-500 tracking-wide"
                   />
               </form>
           </div>
+
+          {/* Players Section - Order 3 on Mobile, Left on lg */}
+          <div className="order-3 lg:order-1 w-full lg:w-72 max-h-[30vh] lg:max-h-none bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-5 flex flex-col shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden">
+              <h3 className="font-bold text-gray-300 mb-3 md:mb-4 border-b border-white/10 pb-2 md:pb-3 tracking-widest uppercase text-xs md:text-sm">Players</h3>
+              <div className="flex-1 overflow-y-auto space-y-2 md:space-y-3 pr-2 custom-scrollbar">
+                  {players.length === 0 && <p className="text-gray-500 text-xs md:text-sm font-medium">Waiting for players...</p>}
+                  {players.map((p, i) => (
+                      <div key={i} className={`flex justify-between items-center p-2 md:p-3 rounded-xl md:rounded-2xl border transition-all ${p.connectionId === currentDrawerId ? 'bg-cyan-500/10 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-black/20 border-white/5'}`}>
+                          <span className="font-semibold text-gray-200 text-sm md:text-base truncate pr-2">
+                              {p.displayName} {p.connectionId === currentDrawerId && ' ✏️'}
+                          </span>
+                          <span className="text-xs md:text-sm font-bold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)] whitespace-nowrap">{p.totalPoints} <span className="text-[10px] text-gray-500">pts</span></span>
+                      </div>
+                  ))}
+              </div>
+              {phase === 'Lobby' && (
+                  <button onClick={handleStartGame} className="mt-4 md:mt-5 w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3 md:py-4 rounded-xl md:rounded-2xl font-bold tracking-wider text-sm md:text-base shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] transition-all transform hover:-translate-y-1">
+                      START GAME
+                  </button>
+              )}
+          </div>
+
       </div>
     </div>
   );
