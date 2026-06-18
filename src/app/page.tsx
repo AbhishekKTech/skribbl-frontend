@@ -45,9 +45,14 @@ export default function LobbyScreen() {
   };
 
   const handleJoinRoom = () => {
-    if (!name.trim()) return alert('Bhai, apna naam toh daal do!');
+    if (!name.trim()) return alert('Enter your name!');
     if (!roomId.trim()) return alert('Room ID required!');
-    router.push(`/room/${roomId}?name=${encodeURIComponent(name)}`);
+    
+    // Mobile keyboard spaces fix
+    const cleanRoomId = roomId.trim().toUpperCase();
+    const cleanName = name.trim();
+    
+    router.push(`/room/${cleanRoomId}?name=${encodeURIComponent(cleanName)}`);
   };
 
   return (
