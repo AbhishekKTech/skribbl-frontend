@@ -259,4 +259,4 @@ http://localhost:3000
 
 # Author
 
-Designed and Developed by **Abhishek K Tech**
+Designed and Developed by **Abhishek Sharma** meetabhishek.in
