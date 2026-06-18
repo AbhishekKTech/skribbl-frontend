@@ -56,6 +56,46 @@ As per the bonus requirements, the WebSocket backend is strictly structured usin
 | WebSockets | Socket.IO | High-frequency bi-directional data transfer |
 | Deployment | Vercel (Frontend), Render (Backend) | Serverless UI hosting and persistent WS backend |
 
+
+---
+## 📁 Frontend Project Structure (Next.js)
+
+skribbl-frontend/
+├── public/                     # Static assets
+├── src/
+│   ├── app/
+│   │   ├── room/[id]/
+│   │   │   └── page.tsx        # Core Game UI (Canvas, Chat, Leaderboard)
+│   │   ├── favicon.ico         # App icon
+│   │   ├── globals.css         # Global styling and Tailwind directives
+│   │   ├── layout.tsx          # Global layout and fonts
+│   │   └── page.tsx            # Lobby UI (Room creation & joining)
+│   └── lib/
+│       └── socket.ts           # Socket.IO client connection setup
+├── eslint.config.mjs           # ESLint configuration
+├── next.config.ts              # Next.js configuration
+├── package.json                # Frontend dependencies & scripts
+├── postcss.config.mjs          # PostCSS configuration
+└── tsconfig.json               # TypeScript configuration
+
+
+---
+## Backend Project Structure (Node.js)
+
+
+skribbl-backend/
+├── src/
+│   ├── config/                 # Environment and app configuration
+│   ├── coordinators/
+│   │   └── SessionEngine.js    # Singleton manager for all active rooms
+│   ├── domain/
+│   │   ├── GameSession.js      # Core game loop, scoring, and timers
+│   │   └── Participant.js      # Player data (socket ID, points, name)
+│   └── main.js                 # Entry point & WebSocket server setup
+├── .gitignore                  # Git ignore rules
+├── package-lock.json           # Locked dependency versions
+└── package.json                # Backend dependencies & scripts
+
 ---
 
 ## Local Setup Instructions
@@ -94,4 +134,4 @@ The app will be available at http://localhost:3000
 
 ---
 
-Designed & Developed by AbhishekKTech
+Designed & Developed by AbhishekKTech https://www.linkedin.com/in/abhishekktech/
